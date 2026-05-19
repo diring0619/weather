@@ -1,4 +1,3 @@
-
 <?php
 include "database/db.php";  //相對路徑
 
@@ -12,65 +11,123 @@ $stim=$pdo->query($sql);
 
     <head> 
         <title>天氣預報系統 </title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f0f2f5;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+            }
+            .weather-container {
+                background-color: #fff;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                padding: 20px;
+                width: 400px;
+                text-align: center;
+            }
+            h1 {
+                color: #333;
+                margin-bottom: 20px;
+            }
+            .weather-data {
+                margin-top: 20px;
+                border-top: 1px solid #eee;
+                padding-top: 20px;
+            }
+            .weather-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 10px 0;
+                border-bottom: 1px solid #eee;
+            }
+            .weather-item:last-child {
+                border-bottom: none;
+            }
+            .weather-item span:first-child {
+                font-weight: bold;
+            }
+            .area-selector {
+                margin-bottom: 20px;
+            }
+            .area-selector label {
+                margin-right: 10px;
+            }
+            .area-selector select {
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+            }
+        </style>
     </head>
     <body> 
+        <div class="weather-container">
+            <h1>天氣預報系統</h1>
 
+            <div class="area-selector">
+                <label for="area-select">選擇地區:</label>
+                <select id="area-select" onchange="this.form.submit()">
+                    <option value="">所有地區</option>
+                    <?php
+                        $areas_sql = "SELECT DISTINCT area FROM w_condition";
+                        $areas_stmt = $pdo->query($areas_sql);
+                        while ($area_row = $areas_stmt->fetch(PDO::FETCH_ASSOC)) {
+                            $selected = (isset($_POST['area']) && $_POST['area'] == $area_row['area']) ? 'selected' : '';
+                            echo "<option value=\"" . $area_row['area'] . "\" $selected>" . $area_row['area'] . "</option>";
+                        }
+                    ?>
+                </select>
+            </div>
 
+            <div class="weather-data">
+                <?php
+                    $selected_area = isset($_POST['area']) ? $_POST['area'] : '';
+                    $sql = "SELECT * FROM w_condition";
+                    if (!empty($selected_area)) {
+                        $sql .= " WHERE area = :area";
+                    }
+                    $stmt = $pdo->prepare($sql);
+                    if (!empty($selected_area)) {
+                        $stmt->bindParam(':area', $selected_area);
+                    }
+                    $stmt->execute();
+                    $weather_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+                    if (empty($weather_data)) {
+                        echo "<p>沒有找到天氣資料。</p>";
+                    } else {
+                        foreach($weather_data as $row) {
+                            echo "<div class=\"weather-item\">";
+                            echo "<span>地區:</span><span>" . $row["area"] . "</span>";
+                            echo "</div>";
+                            echo "<div class=\"weather-item\">";
+                            echo "<span>溫度:</span><span>" . $row["temperature"] . "°C</span>";
+                            echo "</div>";
+                            echo "<div class=\"weather-item\">";
+                            echo "<span>雨量:</span><span>" . $row["rain"] . " mm</span>";
+                            echo "</div>";
+                            echo "<div class=\"weather-item\">";
+                            echo "<span>濕度:</span><span>" . $row["wet"] . "%</span>";
+                            echo "</div>";
+                            echo "<div class=\"weather-item\">";
+                            echo "<span>時間:</span><span>" . $row["w_time"] . "</span>";
+                            echo "</div>";
+                            echo "<hr>";
+                        }
+                    }
+                ?>
+            </div>
+        </div>
 
-
-<?php
-
- // print_r($stim->fetchAll(PDO::FETCH_ASSOC));
-/*
-$a=["溫度"=>10,22,"地區"=>"高雄","2026/03/30"]; //一維陣列
-
-
-foreach($a as $row)
-{
-    echo $row;
-    
-}
-echo "<br>";
-echo $a["溫度"];
-
-$b=[
-    "台南"=>["id"=>1,"temperature"=>23.5,"rain"=>500,"wet"=>20,"w_time"=>"2026/03/30"],
-    "高雄"=>["id"=>2,"temperature"=>23.5,"rain"=>500,"wet"=>20,"w_time"=>"2026/03/30"]
-];
-
-//echo $b["高雄"]["w_time"];    //二維陣列
-echo "<hr>";
-foreach($b as $row)
-{
-    echo $row["temperature"];
-    echo  "<br>";
-}
-*/
-
-$stim2=$stim->fetchAll(PDO::FETCH_ASSOC);
-foreach($stim2 as $row)
-{
-    echo "id=";
-    echo $row["id"];
-    echo "溫度=";
-    echo $row["temperature"];
-    echo "雨量=";
-    echo $row["rain"];
-    echo "濕度=";
-    echo $row["wet"];
-    echo "時間:";
-    echo $row["w_time"];
-    echo "地區:";
-    echo $row["area"];
-    echo "<br>";
-}
-
-?>
-
-
-CWB-C8433897-2A17-4D5F-A4C8-BC44D748F04D
-
+        <script>
+            // JavaScript for handling form submission on select change
+            document.getElementById('area-select').addEventListener('change', function() {
+                this.form.submit();
+            });
+        </script>
     </body>
 
 
